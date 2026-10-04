@@ -1,0 +1,14 @@
+name = "KevClient"
+uuid = "82233a43-5023-4e4c-9330-0582ff1ecc3c"
+version = "0.1.0"
+authors = ["Satoshi Terasaki <terasakisatoshi.math@gmail.com>"]
+
+[deps]
+HFTokenizers = "1f9d4c8e-6b2a-4d7f-9a3c-2e8b5f0a6c41"
+JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+QwenDecisionCore = "fcbe74a4-32ac-465b-ade5-4db25fa89388"
+
+[sources]
+QwenDecisionCore = {path = "packages/QwenDecisionCore.jl"}
+HFTokenizers = {path = "packages/HFTokenizers.jl"}

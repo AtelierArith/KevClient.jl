@@ -1,0 +1,4 @@
+# Only needed when using a tools-local venv instead of extern/kev/.venv.
+torch
+safetensors
+huggingface_hub

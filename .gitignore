@@ -1,0 +1,13 @@
+# Vendored reference checkouts (foreign git repositories; not part of this package)
+/extern/
+
+# Julia environments are resolved from Project.toml ([sources] path dependencies)
+Manifest.toml
+
+# Tool and test caches, downloaded model files, virtualenvs
+.cache/
+.venv/
+__pycache__/
+*.pyc
+*.safetensors
+*.pt
