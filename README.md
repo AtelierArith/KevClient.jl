@@ -1,30 +1,37 @@
 # KevClient.jl
 
 Native Julia inference for [Kev](https://github.com/jaredpalmer/kev) decision
-models — yes/no (`noul`), multiple-choice (`choice`) and rating (`score`)
+models: yes/no (`noul`), multiple-choice (`choice`) and rating (`score`)
 questions over one shared document, with calibrated probabilities. A released
 Kev checkpoint runs on CPU, CUDA and Apple GPUs without Python at inference
-time. Python is used only to stage a checkpoint (`tools/`, via PythonCall.jl).
+time; Python is used only to stage a checkpoint (`tools/`, via PythonCall.jl).
 
-The shared packages are Git submodules of their own repositories
-([QwenDecisionCore.jl](https://github.com/AtelierArith/QwenDecisionCore.jl) and
-[HFTokenizers.jl](https://github.com/AtelierArith/HFTokenizers.jl)). Clone with
-submodules, or initialise them afterwards:
+## Architecture
+
+KevClient is a thin client over two shared packages, each its own repository and
+a Git submodule of this one:
+
+| Path (submodule) | Repository | Responsibility |
+|---|---|---|
+| `packages/QwenDecisionCore.jl` | [QwenDecisionCore.jl](https://github.com/AtelierArith/QwenDecisionCore.jl) | Qwen3.5 / Qwen3.8 hybrid backbone (partial RoPE, full attention, Gated DeltaNet, RMS, MLP), safetensors reader/writer, Hugging Face checkpoint resolution, CPU policy, Metal / CUDA / Accelerate / Octavian / SIMD extensions, and the ordered Choice / Noul / Score types |
+| `packages/HFTokenizers.jl` | [HFTokenizers.jl](https://github.com/AtelierArith/HFTokenizers.jl) | Self-contained Hugging Face byte-level BPE tokenizer reading `tokenizer.json` (Qwen / GPT-2 / RoBERTa style); no Python |
+
+KevClient itself adds what is Kev-specific: the pointer head, the packed
+question encoding, the TypeSafe request → record mapping, the calibrated
+`KevModel`, a Julia LoRA merge, and the `head.pt` bundle loader
+(`src/`). `tools/` stages a checkpoint and may use Python. The same core also
+backs [JeffClient.jl](https://github.com/AtelierArith/JeffClient.jl).
+
+### Clone with submodules
 
 ```bash
 git clone --recurse-submodules https://github.com/AtelierArith/KevClient.jl.git
-# or, in an existing checkout:
+# in an existing checkout:
 git submodule update --init --recursive
 ```
 
-## Packages
-
-| Path | What it is |
-|---|---|
-| `packages/QwenDecisionCore.jl` | Qwen3.5 / Qwen3.8 hybrid backbone (partial RoPE, full attention, Gated DeltaNet, RMS, MLP), safetensors reader/writer, Hugging Face checkpoint resolution, CPU policy, accelerator extensions, and the Choice/Noul/Score types |
-| `packages/HFTokenizers.jl` | Self-contained Hugging Face byte-level BPE tokenizer reading `tokenizer.json` (Qwen / GPT-2 / RoBERTa style); no Python |
-| `src/KevClient.jl` | The Kev layer: pointer head, packed encoding, TypeSafe request → record, calibrated `KevModel`, LoRA merge, and the `head.pt` bundle loader |
-| `tools/` | `export_kev_checkpoint.jl` stages a Kev checkpoint for KevClient; may use Python |
+The packages are not registered on the General registry; work from a clone with
+its submodules, or `Pkg.develop` each package from its own repository.
 
 ## Quick start
 
@@ -62,30 +69,41 @@ distributions = probs(model, encode(tok, record))
 `encode` packs `<state> … <q> instructions <opt> o </opt> … <decide>` per
 question; on a hybrid backbone each question runs as its own causal row. The
 pointer head scores each option's `</opt>` hidden state against `<decide>`, and
-the checkpoint's fitted temperature is applied in `probs`.
+the checkpoint's fitted temperature is applied in `probs`. `decide` returns a
+structured answer (`choice`, `noul`, or `score`) per question.
 
 ## Checkpoint bundles
 
 `tools/export_kev_checkpoint.jl` reads `head.pt` (a PyTorch pickle Julia cannot
 open) and writes `pointer_head.safetensors` + `kev_meta.json`, plus the
 tokenizer. A full-weight checkpoint records the original as `backbone` so its
-tens of GB are never copied.
+tens of GB are never copied. It needs a Python with torch + safetensors:
 
 ```bash
-(cd extern/kev && uv sync)   # or a Python with torch + safetensors
+uv venv tools/.venv
+uv pip install --python tools/.venv -r tools/requirements.txt
 julia --project=tools tools/export_kev_checkpoint.jl jaredpalmer/kev-4b@v1.0 --out runs/kev-4b-bundle
 ```
 
+See [tools/README.md](tools/README.md) for the vendored Python environment and
+`JULIA_PYTHONCALL_EXE`.
+
 ## Tests
 
+The three packages each have an offline suite:
+
 ```bash
-julia --project=packages/HFTokenizers.jl -e 'using Pkg; Pkg.test()'
+julia --project=. -e 'using Pkg; Pkg.test()'                          # KevClient
+julia --project=packages/QwenDecisionCore.jl -e 'using Pkg; Pkg.test()'  # core
+julia --project=packages/HFTokenizers.jl -e 'using Pkg; Pkg.test()'      # tokenizer
 ```
 
-`HFTokenizers` is checked against Hugging Face `tokenizers`: tiny committed
-fixtures (always) and real Qwen / GPT-2 / RoBERTa tokenizers at pinned
-revisions (downloaded on first use, skipped when offline). Regenerate the
-oracle with `test/generate_oracle.py` / `test/generate_real_oracle.py`.
+The KevClient suite checks request rendering, packed encoding, the pointer head,
+LoRA merging and a synthetic bundle without weights or network. The core checks
+the backbone against a committed PyTorch reference plus the safetensors and Hub
+paths. HFTokenizers is checked against Hugging Face `tokenizers` on tiny
+committed fixtures (always) and pinned real tokenizers (downloaded on first use,
+skipped when offline).
 
 ## Status
 
