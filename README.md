@@ -6,6 +6,17 @@ questions over one shared document, with calibrated probabilities. A released
 Kev checkpoint runs on CPU, CUDA and Apple GPUs without Python at inference
 time. Python is used only to stage a checkpoint (`tools/`, via PythonCall.jl).
 
+The shared packages are Git submodules of their own repositories
+([QwenDecisionCore.jl](https://github.com/AtelierArith/QwenDecisionCore.jl) and
+[HFTokenizers.jl](https://github.com/AtelierArith/HFTokenizers.jl)). Clone with
+submodules, or initialise them afterwards:
+
+```bash
+git clone --recurse-submodules https://github.com/AtelierArith/KevClient.jl.git
+# or, in an existing checkout:
+git submodule update --init --recursive
+```
+
 ## Packages
 
 | Path | What it is |
