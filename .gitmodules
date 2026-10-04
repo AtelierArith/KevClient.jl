@@ -1,6 +1,6 @@
 [submodule "packages/QwenDecisionCore.jl"]
 	path = packages/QwenDecisionCore.jl
-	url = git@github.com:AtelierArith/QwenDecisionCore.jl.git
+	url = https://github.com/AtelierArith/QwenDecisionCore.jl.git
 [submodule "packages/HFTokenizers.jl"]
 	path = packages/HFTokenizers.jl
-	url = git@github.com:AtelierArith/HFTokenizers.jl.git
+	url = https://github.com/AtelierArith/HFTokenizers.jl.git
