@@ -9,12 +9,12 @@ time; Python is used only to stage a checkpoint (`tools/`, via PythonCall.jl).
 ## Architecture
 
 KevClient is a thin client over two shared packages, each its own repository and
-a Git submodule of this one:
+pulled in through `[sources]` in `Project.toml`:
 
-| Path (submodule) | Repository | Responsibility |
+| Package | Repository | Responsibility |
 |---|---|---|
-| `packages/QwenDecisionCore.jl` | [QwenDecisionCore.jl](https://github.com/AtelierArith/QwenDecisionCore.jl) | Qwen3.5 / Qwen3.8 hybrid backbone (partial RoPE, full attention, Gated DeltaNet, RMS, MLP), safetensors reader/writer, Hugging Face checkpoint resolution, CPU policy, Metal / CUDA / Accelerate / Octavian / SIMD extensions, and the ordered Choice / Noul / Score types |
-| `packages/HFTokenizers.jl` | [HFTokenizers.jl](https://github.com/AtelierArith/HFTokenizers.jl) | Self-contained Hugging Face byte-level BPE tokenizer reading `tokenizer.json` (Qwen / GPT-2 / RoBERTa style); no Python |
+| `QwenDecisionCore` | [QwenDecisionCore.jl](https://github.com/AtelierArith/QwenDecisionCore.jl) | Qwen3.5 / Qwen3.8 hybrid backbone (partial RoPE, full attention, Gated DeltaNet, RMS, MLP), safetensors reader/writer, Hugging Face checkpoint resolution, CPU policy, Metal / CUDA / Accelerate / Octavian / SIMD extensions, and the ordered Choice / Noul / Score types |
+| `HFTokenizers` | [HFTokenizers.jl](https://github.com/AtelierArith/HFTokenizers.jl) | Self-contained Hugging Face byte-level BPE tokenizer reading `tokenizer.json` (Qwen / GPT-2 / RoBERTa style); no Python |
 
 KevClient itself adds what is Kev-specific: the pointer head, the packed
 question encoding, the TypeSafe request → record mapping, the calibrated
@@ -22,16 +22,18 @@ question encoding, the TypeSafe request → record mapping, the calibrated
 (`src/`). `tools/` stages a checkpoint and may use Python. The same core also
 backs [JeffClient.jl](https://github.com/AtelierArith/JeffClient.jl).
 
-### Clone with submodules
+### Dependencies
+
+The packages are not registered on the General registry. `Project.toml` (and
+`test/Project.toml`) declare them under `[sources]` with their Git URLs, so a
+plain clone works:
 
 ```bash
-git clone --recurse-submodules https://github.com/AtelierArith/KevClient.jl.git
-# in an existing checkout:
-git submodule update --init --recursive
+git clone https://github.com/AtelierArith/KevClient.jl.git
+julia --project=. -e 'using Pkg; Pkg.instantiate()'
 ```
 
-The packages are not registered on the General registry; work from a clone with
-its submodules, or `Pkg.develop` each package from its own repository.
+To hack on a dependency, run `Pkg.develop(path="...")` on a local checkout.
 
 ## Quick start
 
@@ -90,12 +92,10 @@ See [tools/README.md](tools/README.md) for the vendored Python environment and
 
 ## Tests
 
-The three packages each have an offline suite:
+KevClient has an offline suite; the other two packages carry their own in their repositories:
 
 ```bash
 julia --project=. -e 'using Pkg; Pkg.test()'                          # KevClient
-julia --project=packages/QwenDecisionCore.jl -e 'using Pkg; Pkg.test()'  # core
-julia --project=packages/HFTokenizers.jl -e 'using Pkg; Pkg.test()'      # tokenizer
 ```
 
 The KevClient suite checks request rendering, packed encoding, the pointer head,

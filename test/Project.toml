@@ -7,6 +7,6 @@ QwenDecisionCore = "fcbe74a4-32ac-465b-ade5-4db25fa89388"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [sources]
-HFTokenizers = {path = "../packages/HFTokenizers.jl"}
+HFTokenizers = {url = "https://github.com/AtelierArith/HFTokenizers.jl.git"}
 KevClient = {path = ".."}
-QwenDecisionCore = {path = "../packages/QwenDecisionCore.jl"}
+QwenDecisionCore = {url = "https://github.com/AtelierArith/QwenDecisionCore.jl.git"}

@@ -3,6 +3,7 @@
 using Test
 import JSON
 import LinearAlgebra
+import HFTokenizers
 using QwenDecisionCore: QwenBackbone, read_native_weights, write_native_weights
 using KevClient
 using KevClient: head_dim, state_tokens, OPT_NONE, OPT_DECIDE
@@ -162,8 +163,7 @@ end
     end
 
     @testset "tokenizer policy" begin
-        fixture = joinpath(@__DIR__, "..", "packages", "HFTokenizers.jl",
-                           "test", "fixtures", "qwenlike.json")
+        fixture = joinpath(pkgdir(HFTokenizers), "test", "fixtures", "qwenlike.json")
         tok = HFTokenizer(fixture)
         ids = special_ids(tok)
         @test length(ids) == 5

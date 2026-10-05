@@ -10,5 +10,5 @@ LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 QwenDecisionCore = "fcbe74a4-32ac-465b-ade5-4db25fa89388"
 
 [sources]
-QwenDecisionCore = {path = "packages/QwenDecisionCore.jl"}
-HFTokenizers = {path = "packages/HFTokenizers.jl"}
+HFTokenizers = {rev = "main", url = "https://github.com/AtelierArith/HFTokenizers.jl.git"}
+QwenDecisionCore = {rev = "main", url = "https://github.com/AtelierArith/QwenDecisionCore.jl.git"}
